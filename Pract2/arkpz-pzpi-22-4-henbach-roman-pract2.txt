@@ -1,0 +1,134 @@
+МІНІСТЕРСТВО ОСВІТИ І НАУКИ УКРАЇНИ
+ 
+ХАРКІВСЬКИЙ НАЦІОНАЛЬНИЙ
+УНІВЕРСИТЕТ РАДІОЕЛЕКТРОНІКИ
+ 
+Кафедра «Програмна інженерія»
+ 
+ 
+ЗВІТ
+до практичного заняття №2 з дисципліни
+«Аналіз та рефакторинг коду»
+На тему: «Правила оформлення програмного коду»
+
+ 
+ 
+Виконав:                                                           	Прийняв:
+ст. гр. ПЗПІ-22-4                                    	       	ст. викладач кафедри ПІ 
+Геньбач Роман Максимович                                  Сокорчук Ігор Петрович
+						
+
+
+
+
+
+
+
+Харків 2024
+1 МЕТА
+     Навчитися рефакторингу програмного коду, дослідити обрані методи рефакторингу на прикладі власного проекту.
+
+2 ЗАВДАННЯ
+	Обрати три методи рефакторингу з книги Мартіна Фаулера «Refactoring. Improving the Design of Existing Code». Створити презентацію на тему «Методи рефакторингу коду програмного забезпечення», де навести приклади коду зі свого програмного проекту і застосувати до нього обрані методи.
+
+3 ХІД РОБОТИ
+Було обрано такі методи рефакторингу: 
+● Push Down Method (Опустити метод)
+● Remove Middle Man (Прибрати посередника)
+● Replace Parameter With Method (Замінити параметр на метод)
+У презентації (Додаток Б) наведено ці методи з описами, а також приклад коду до і після застосування цих методів.
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+
+
+     
+ВИСНОВКИ
+     Набуто навичок рефакторингу програмного коду, досліджено обрані методи рефакторингу на прикладі власного проекту.
+     Відео-презентація: https://youtu.be/M-OwQUKOD5E
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+ДОДАТОК А
+Програмний код, використаний як приклад у презентації.
+
+using Battle_City.Fields;
+using Battle_City.Internal_Code;
+using Microsoft.VisualBasic.FileIO;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text;
+using System.Threading.Tasks;
+using static Battle_City.Internal_Code.Globals;
+
+namespace Battle_City.Game_Elements.Entities
+{
+    public abstract class Entity : Visible
+    {
+        public bool IsDead { get; private set; }
+        protected EntitiesField entitiesField;
+
+        public Entity(int x, int y, int width, int height, EntitiesField entitiesField) 
+            : base(x, y, width, height)
+        {
+            this.entitiesField = entitiesField;
+            this.entitiesField.PlaceOnField(this);
+        }
+
+        public virtual void Die()
+        {
+            IsDead = true;
+            entitiesField.Remove(this);
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+ДОДАТОК Б
+Презентація на тему «Методи рефакторингу коду програмного забезпечення».
+
+
+2
+
+
