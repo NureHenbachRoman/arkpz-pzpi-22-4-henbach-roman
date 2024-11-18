@@ -82,38 +82,362 @@
 ДОДАТОК А
 Програмний код, використаний як приклад у презентації.
 
-using Battle_City.Fields;
-using Battle_City.Internal_Code;
-using Microsoft.VisualBasic.FileIO;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-using static Battle_City.Internal_Code.Globals;
+Файл Entity.cs
 
-namespace Battle_City.Game_Elements.Entities
-{
-    public abstract class Entity : Visible
-    {
-        public bool IsDead { get; private set; }
-        protected EntitiesField entitiesField;
+1 using Battle_City.Fields;
+2 using Battle_City.Internal_Code;
+3 using Microsoft.VisualBasic.FileIO;
+4 using System;
+5 using System.Collections.Generic;
+6 using System.Linq;
+7 using System.Runtime.CompilerServices;
+8 using System.Text;
+9 using System.Threading.Tasks;
+10 using static Battle_City.Internal_Code.Globals;
+11 
+12 namespace Battle_City.Game_Elements.Entities
+13 {
+14     public abstract class Entity : Visible
+15     {
+16         public bool IsDead { get; private set; }
+17         protected EntitiesField entitiesField;
+18 
+19         public Entity(int x, int y, int width, int height, EntitiesField entitiesField) 
+20             : base(x, y, width, height)
+21         {
+22             this.entitiesField = entitiesField;
+23             this.entitiesField.PlaceOnField(this);
+24         }
+25 
+26         public virtual void Die()
+27         {
+28             IsDead = true;
+29             entitiesField.Remove(this);
+30         }
+31     }
+32 }
 
-        public Entity(int x, int y, int width, int height, EntitiesField entitiesField) 
-            : base(x, y, width, height)
-        {
-            this.entitiesField = entitiesField;
-            this.entitiesField.PlaceOnField(this);
-        }
 
-        public virtual void Die()
-        {
-            IsDead = true;
-            entitiesField.Remove(this);
-        }
-    }
-}
+
+
+
+
+
+
+
+Файл Tank.cs
+
+1 using Battle_City.Fields;
+2 using Battle_City.Internal_Code;
+3 using System;
+4 using System.Collections.Generic;
+5 using System.Linq;
+6 using System.Text;
+7 using System.Threading.Tasks;
+8 using static Battle_City.Internal_Code.Globals;
+9 
+10 namespace Battle_City.Game_Elements.Entities
+11 {
+12     public abstract class Tank : MovingEntity
+13     {
+14         public Tank(int x, int y, Direction dir, Field field) : base(x, y, dir, TankWidth, TankHeight, field)
+15         {
+16 
+17             Speed = 1;
+18             IsMoving = false;
+19         }
+20 
+21         
+22         protected override void MoveHelper(Field field, int deltaX, int deltaY)
+23         {
+24             int xstart, ystart, xstop, ystop;
+25             (xstart, ystart, xstop, ystop) = (deltaX, deltaY) switch
+26             {
+27                 (0, -1) => (X, Y - Speed, X + Width, Y),
+28                 (0,  1) => (X, Y + Height, X + Width, Y + Height + Speed),
+29                 (-1, 0) => (X - Speed, Y, X, Y + Height),
+30                 (1,  0) => (X + Width, Y, X + Width + Speed, Y + Height),
+31                 _ => throw new Exception("Wrong X or Y change value in MoveHelper method")
+32             };
+33 
+34             if (field.AreaIsAvailableForTank(xstart, ystart, xstop, ystop))
+35             {
+36                 X += Speed * deltaX;
+37                 Y += Speed * deltaY;
+38                 IsMoving = true;
+39             }
+40         }
+41         
+42         public override void Move(Field field)
+43         {
+44             IsMoving = false;
+45             base.Move(field);
+46         }
+47 
+48         public void Shoot(Field field)
+49         {
+50             if (CountBulletsDeployedBy(this) > 0)
+51             {
+52                 return;
+53             }
+54             (int bulX, int bulY) = Dir switch
+55             {
+56                 Direction.Up => (X + 1, Y - BulletHeight),
+57                 Direction.Down => (X + 1, Y + Height),
+58                 Direction.Right => (X + Width, Y + 1),
+59                 Direction.Left => (X - BulletWidth, Y + 1),
+60                 _ => (0, 0)
+61             };
+62             if (field.AreaIsAvailableForBullet(bulX, bulY, bulX + BulletWidth, bulY + BulletHeight))
+63             {
+64                 new Bullet(bulX, bulY, Dir, this, field);
+65             }
+66             else
+67             {
+68                 (int xstart, int ystart, int xstop, int ystop) = Dir switch
+69                 {
+70                     Direction.Up => (X, Y - 2, X + Width, Y),
+71                     Direction.Down => (X, Y + Height, X + Width, Y + Height + 2),
+72                     Direction.Right => (X + Width, Y, X + Width + 2, Y + Height),
+73                     Direction.Left => (X - 2, Y, X, Y + Height),
+74                     _ => (0, 0, 0, 0)
+75                 };
+76                 field.Destroy(xstart, ystart, xstop, ystop);
+
+
+
+
+
+
+
+
+
+
+
+Файл Enemy.cs
+
+1 using Battle_City.Fields;
+2 using Battle_City.Internal_Code;
+3 using System;
+4 using System.Collections.Generic;
+5 using System.Linq;
+6 using System.Text;
+7 using System.Threading.Tasks;
+8 
+9 namespace Battle_City.Game_Elements.Entities
+10 {
+11     public class Enemy : Tank
+12     {
+13         private List<Direction> blockedDirections = new();
+14         public Enemy(int x, int y, Direction dir, Field field) : base(x, y, dir, field)
+15         {
+16             IsMoving = true;
+17         }
+18 
+19         public override void Move(Field field)
+20         {
+21             base.Move(field);
+22 
+23             Random rnd = new Random();
+24             List<Direction> availableDirections = new();
+25 
+26             if (IsMoving)
+27             {
+28                 blockedDirections.Clear();
+29                 return;
+30             }
+31             else
+32             {
+33                 blockedDirections.Add(Dir);
+34                 
+35                 foreach (Direction direction in Enum.GetValues<Direction>())
+36                 {
+37                     if (!blockedDirections.Contains(direction))
+38                     {
+39                         availableDirections.Add(direction);
+40                         IsMoving = true;
+41                     }
+42                 }
+43                 if (availableDirections.Count == 0)
+44                 {
+45                     blockedDirections.Clear();
+46                     IsMoving = true;
+47                 }
+48                 else
+49                 {
+50                     Dir = availableDirections[rnd.Next(availableDirections.Count)];
+51                 }
+52             }                        
+53         }
+54 
+55         public void RandomShoot(Field field)
+56         {
+57             Random rnd = new Random();
+58             if (rnd.Next(100) < 5)
+59             {
+60                 Shoot(field);
+61             }
+62         }
+63     }
+64 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Файл Field.cs
+
+1 using System;
+2 using System.Collections.Generic;
+3 using System.Linq;
+4 using System.Security.Cryptography.X509Certificates;
+5 using System.Text;
+6 using System.Threading.Tasks;
+7 using Battle_City.Game_Elements;
+8 using Battle_City.Game_Elements.Cells;
+9 using Battle_City.Internal_Code;
+10 using Battle_City.Game_Elements.Entities;
+11 
+12 namespace Battle_City.Fields
+13 {
+14     public class Field : Visible
+15     {
+16         private Cell[,] _field;
+17 
+18         public Field(int width, int height, int x = 0, int y = 0) : base(x, y, width, height)
+19         {
+20             _field = new Cell[height, width];
+21         }
+22 
+23         public Cell this[int x, int y]
+24         {
+25             get
+26             {
+27                 return _field[y, x];
+28             }
+29             set
+30             {
+31                 _field[y, x] = value;
+32             }
+33         }
+34         public int Xmax { get { return _field.GetLength(1); } }
+35         public int Ymax { get { return _field.GetLength(0); } }
+36 
+37         public void Generate()
+38         {
+39             var _rnd = new Random();
+40 
+41             for (int i = 0; i < Xmax; i += 4)
+42             {
+43                 for (int j = 0; j < Ymax; j += 4)
+44                 {
+45                     Build.Block(this, i, j, Cell.cells[_rnd.Next(Cell.cells.Length)]);
+46                 }
+47             }
+48             Build.Base(this);
+49         }
+50 
+51 
+52         public bool AreaIsAvailableForTank(int xstart, int ystart, int xstop, int ystop)
+53         {
+54             return AreaIsAvailableFor(xstart, ystart, xstop, ystop, (i, j) => !this[i, j].TanksCanMove);
+55         }
+56 
+57         public bool AreaIsAvailableForBullet(int xstart, int ystart, int xstop, int ystop)
+58         {
+59             return AreaIsAvailableFor(xstart, ystart, xstop, ystop, (i, j) => !this[i, j].BulletsCanMove);
+60         }
+61 
+62         private bool AreaIsAvailableFor(int xstart, int ystart, int xstop, int ystop, Func<int, int, bool> checker)
+63         {
+64             if (xstart < 0 || ystart < 0 || xstop > Xmax || ystop > Ymax)
+65             {
+66                 return false;
+67             }
+68 
+69             for (int i = xstart; i < xstop; i++)
+70             {
+71                 for (int j = ystart; j < ystop; j++)
+72                 {
+73                     if (checker(i, j))
+74                     {
+75                         return false;
+76                     }
+77                 }
+78             }
+79             return true;
+80         }
+81 
+82         public void Destroy(int xstart, int ystart, int xstop, int ystop)
+83         {
+84             for (int i = xstart; i < xstop; i++)
+85             {
+86                 for (int j = ystart; j < ystop; j++)
+87                 {
+88                     if (i < 0 || j < 0 || i >= Xmax || j >= Ymax)
+89                     {
+90                         continue;
+91                     }
+92                     if (this[i, j].IsDestroyable)
+93                     {
+94                         this[i, j] = new EmptyCell(i, j);
+95                         this[i, j].Draw();
+96                     }
+97                 }
+98             }
+99         }
+100 
+101         public void Redraw(int xstart, int ystart, int xstop, int ystop)
+102         {
+103             for (int i = xstart; i <= xstop; i++)
+104             {
+105                 for (int j = ystart; j <= ystop; j++)
+106                 {
+107                     if (i >= 0 && j >= 0 && i < Xmax && j < Ymax)
+108                     {
+109                         this[i, j].Draw();
+110                     }
+111                 }
+112             }
+113         }
+114     }
+115 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -128,7 +452,9 @@ namespace Battle_City.Game_Elements.Entities
 ДОДАТОК Б
 Презентація на тему «Методи рефакторингу коду програмного забезпечення».
 
-
+         
 2
+
+
 
 
