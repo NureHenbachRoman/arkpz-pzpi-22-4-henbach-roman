@@ -1,20 +1,5 @@
+from django.contrib.auth.models import User
 from django.db import models
-
-
-class User(models.Model):
-    class Role(models.TextChoices):
-        customer = 'c', 'Customer'
-        manager = 'm', 'Manager'
-        owner = 'o', 'Owner'
-
-    full_name = models.CharField(max_length=255)
-    login = models.CharField(max_length=150, unique=True)
-    password = models.CharField(max_length=255)
-    email = models.EmailField(unique=True)
-    role = models.CharField(max_length=2, choices=Role.choices, null=False)
-
-    def __str__(self):
-        return self.login
 
 
 class Laundry(models.Model):
@@ -64,6 +49,7 @@ class WashingCycle(models.Model):
     mode = models.CharField(max_length=50, choices=Mode.choices)
     temperature = models.PositiveIntegerField(choices=Temperature.choices)
     status = models.CharField(max_length=15, choices=Status.choices)
+    booked_for = models.DateTimeField(null=True)
     start = models.DateTimeField(null=True)
     end = models.DateTimeField(null=True)
     washing_machine = models.ForeignKey(WashingMachine, on_delete=models.CASCADE, related_name='washing_cycles')
@@ -74,19 +60,17 @@ class WashingCycle(models.Model):
 
 
 class Stats(models.Model):
+    """
+    Stores the load percentage of a laundry at a given time.
+    This is used to predict load percentage for future via linear regression model.
+    """
+
     timestamp = models.DateTimeField()
     load_percentage = models.PositiveIntegerField()
     laundry = models.ForeignKey(Laundry, on_delete=models.CASCADE, related_name='stats')
 
     def __str__(self):
         return f'{self.laundry.name} - {self.pk} ({self.timestamp}, {self.load_percentage})'
-
-class Booking(models.Model):
-    time = models.DateTimeField()
-    washing_cycle = models.OneToOneField(WashingCycle, on_delete=models.CASCADE, related_name='booking')
-
-    def __str__(self):
-        return f'{self.time}'
 
 
 class Payment(models.Model):
@@ -98,13 +82,19 @@ class Payment(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     time = models.DateTimeField()
     status = models.CharField(max_length=15, choices=Status.choices)
-    washing_cycle = models.OneToOneField(WashingCycle, on_delete=models.CASCADE, related_name='payment')
+    washing_cycle = models.ForeignKey(WashingCycle, on_delete=models.CASCADE, related_name='payments')
 
     def __str__(self):
         return f'{self.washing_cycle} - {self.pk} ({self.amount}, {self.time}, {self.status})'
 
 
 class TimePricingCondition(models.Model):
+    """
+    Stores the price multiplier for a given time range. If dynamic pricing is enabled for a laundry,
+    the multiplier will be applying to the base price of washing cycle during that time range.
+    If ranges overlap, the one with the latest start time will be used.
+    """
+
     start = models.TimeField()
     end = models.TimeField()
     price_multiplier = models.DecimalField(max_digits=5, decimal_places=2)
@@ -115,6 +105,13 @@ class TimePricingCondition(models.Model):
 
 
 class LoadPricingCondition(models.Model):
+    """
+    Stores the price multiplier for a given load percentage. If dynamic pricing is enabled for a laundry,
+    the multiplier will be applied to the base price of washing cycle
+    if load percentage is equal to the given percentage or higher.
+    The one with the highest suitable load percentage will be used.
+    """
+
     load_percentage = models.PositiveIntegerField()
     price_multiplier = models.DecimalField(max_digits=5, decimal_places=2)
     laundry = models.ForeignKey(Laundry, on_delete=models.CASCADE, related_name='load_pricing_conditions')
