@@ -34,10 +34,1372 @@
      Наступним кроком було створення ER діаграми даних (рисунок 2).
 
 Рисунок 2 – ER діаграма даних
+	
+     Діаграму структури бази даних (БД), розробленої на основі ER-діаграми, наведено на рисунку 3.
+
+Рисунок 3 – Діаграма структури бази даних (MySQL)
+	На основі розробленої бази даних було розроблено прикладний програмний інтерфейс (API) для взаємодії з клієнтами через протокол HTTPS. Програмну реалізацію було створено за допомогою фреймворку Django REST Framework (DRF). Специфікацію API було згенеровано з використанням модуля dfr-yasg, її наведено у додатку А. Фрагменти програмного коду наведено в додатку Б.
+     Під час розробки і реалізації БД і API було прийнято такі інженерні рішення: 
+– використовувати моделі User і Group з модуля django.contrib.auth.models, адже для них вбудоване надійне зберігання чутливих даних користувачів, як-от хешування паролю, а також вони підтримують зручну інтеграцію з модулями для автентифікації, авторизації і керування дозволами;
+– створити вкладену структуру API для ресурсів, що стосуються інших ресурсів (наприклад /laundries/{laundry_id}/load-pricing-conditions/), що забезпечить чітку структурованість API;
+– використовувати СУБД MySQL, адже вона проста і підтримує генерацію діаграм структури бази даних;
+– використовувати протоколи HTTPS і SSL для захисту чутливих даних користувачів.
 
 ВИСНОВКИ
-     
+     Було розроблено базу даних для серверної частини  програмної системи та прикладний програмний інтерфейс.
+     Було створено запис перевірки роботи API: https://youtu.be/Fcblq1Lvzic.
 
+
+ДОДАТОК А
+Специфікація API у форматі OPENAPI
+1   swagger: '2.0'
+2   info:
+3     title: LaundroMate API
+4     version: '1.0'
+5   host: localhost:8000
+6   schemes:
+7   - http
+8   basePath: /api
+9   consumes:
+10  - application/json
+11  produces:
+12  - application/json
+13  securityDefinitions:
+14    Bearer:
+15      type: apiKey
+16      name: Authorization
+17      in: header
+18  security:
+19  - Bearer: []
+20  paths:
+21    /laundries/:
+22      get:
+23        operationId: laundries_list
+24        description: ''
+25        parameters: []
+26        responses:
+27          '200':
+28            description: ''
+29            schema:
+30              type: array
+31              items:
+32                $ref: '#/definitions/Laundry'
+33        tags:
+34        - laundries
+35      post:
+36        operationId: laundries_create
+37        description: ''
+38        parameters:
+39        - name: data
+40          in: body
+41          required: true
+42          schema:
+43            $ref: '#/definitions/Laundry'
+44        responses:
+45          '201':
+46            description: ''
+47            schema:
+48              $ref: '#/definitions/Laundry'
+49        tags:
+50        - laundries
+51      parameters: []
+52    /laundries/{id}/:
+53      get:
+54        operationId: laundries_read
+55        description: ''
+56        parameters: []
+57        responses:
+58          '200':
+59            description: ''
+60            schema:
+61              $ref: '#/definitions/Laundry'
+62        tags:
+63        - laundries
+64      put:
+65        operationId: laundries_update
+66        description: ''
+67        parameters:
+68        - name: data
+69          in: body
+70          required: true
+71          schema:
+72            $ref: '#/definitions/Laundry'
+73        responses:
+74          '200':
+75            description: ''
+76            schema:
+77              $ref: '#/definitions/Laundry'
+78        tags:
+79        - laundries
+80      patch:
+81        operationId: laundries_partial_update
+82        description: ''
+83        parameters:
+84        - name: data
+85          in: body
+86          required: true
+87          schema:
+88            $ref: '#/definitions/Laundry'
+89        responses:
+90          '200':
+91            description: ''
+92            schema:
+93              $ref: '#/definitions/Laundry'
+94        tags:
+95        - laundries
+96      delete:
+97        operationId: laundries_delete
+98        description: ''
+99        parameters: []
+100       responses:
+101         '204':
+102           description: ''
+103       tags:
+104       - laundries
+105     parameters:
+106     - name: id
+107       in: path
+108       description: A unique integer value identifying this laundry.
+109       required: true
+110       type: integer
+111   /laundries/{laundry_id}/load-pricing-conditions/:
+112     get:
+113       operationId: laundries_load-pricing-conditions_list
+114       description: ''
+115       parameters: []
+116       responses:
+117         '200':
+118           description: ''
+119           schema:
+120             type: array
+121             items:
+122               $ref: '#/definitions/LoadPricingCondition'
+123       tags:
+124       - laundries
+125     post:
+126       operationId: laundries_load-pricing-conditions_create
+127       description: ''
+128       parameters:
+129       - name: data
+130         in: body
+131         required: true
+132         schema:
+133           $ref: '#/definitions/LoadPricingCondition'
+134       responses:
+135         '201':
+136           description: ''
+137           schema:
+138             $ref: '#/definitions/LoadPricingCondition'
+139       tags:
+140       - laundries
+141     parameters:
+142     - name: laundry_id
+143       in: path
+144       required: true
+145       type: string
+146   /laundries/{laundry_id}/load-pricing-conditions/{id}/:
+147     get:
+148       operationId: laundries_load-pricing-conditions_read
+149       description: ''
+150       parameters: []
+151       responses:
+152         '200':
+153           description: ''
+154           schema:
+155             $ref: '#/definitions/LoadPricingCondition'
+156       tags:
+157       - laundries
+158     put:
+159       operationId: laundries_load-pricing-conditions_update
+160       description: ''
+161       parameters:
+162       - name: data
+163         in: body
+164         required: true
+165         schema:
+166           $ref: '#/definitions/LoadPricingCondition'
+167       responses:
+168         '200':
+169           description: ''
+170           schema:
+171             $ref: '#/definitions/LoadPricingCondition'
+172       tags:
+173       - laundries
+174     patch:
+175       operationId: laundries_load-pricing-conditions_partial_update
+176       description: ''
+177       parameters:
+178       - name: data
+179         in: body
+180         required: true
+181         schema:
+182           $ref: '#/definitions/LoadPricingCondition'
+183       responses:
+184         '200':
+185           description: ''
+186           schema:
+187             $ref: '#/definitions/LoadPricingCondition'
+188       tags:
+189       - laundries
+190     delete:
+191       operationId: laundries_load-pricing-conditions_delete
+192       description: ''
+193       parameters: []
+194       responses:
+195         '204':
+196           description: ''
+197       tags:
+198       - laundries
+199     parameters:
+200     - name: laundry_id
+201       in: path
+202       required: true
+203       type: string
+204     - name: id
+205       in: path
+206       required: true
+207       type: string
+208   /laundries/{laundry_id}/stats/:
+209     get:
+210       operationId: laundries_stats_list
+211       description: ''
+212       parameters: []
+213       responses:
+214         '200':
+215           description: ''
+216           schema:
+217             type: array
+218             items:
+219               $ref: '#/definitions/Stats'
+220       tags:
+221       - laundries
+222     post:
+223       operationId: laundries_stats_create
+224       description: ''
+225       parameters:
+226       - name: data
+227         in: body
+228         required: true
+229         schema:
+230           $ref: '#/definitions/Stats'
+231       responses:
+232         '201':
+233           description: ''
+234           schema:
+235             $ref: '#/definitions/Stats'
+236       tags:
+237       - laundries
+238     parameters:
+239     - name: laundry_id
+240       in: path
+241       required: true
+242       type: string
+243   /laundries/{laundry_id}/stats/{id}/:
+244     get:
+245       operationId: laundries_stats_read
+246       description: ''
+247       parameters: []
+248       responses:
+249         '200':
+250           description: ''
+251           schema:
+252             $ref: '#/definitions/Stats'
+253       tags:
+254       - laundries
+255     put:
+256       operationId: laundries_stats_update
+257       description: ''
+258       parameters:
+259       - name: data
+260         in: body
+261         required: true
+262         schema:
+263           $ref: '#/definitions/Stats'
+264       responses:
+265         '200':
+266           description: ''
+267           schema:
+268             $ref: '#/definitions/Stats'
+269       tags:
+270       - laundries
+271     patch:
+272       operationId: laundries_stats_partial_update
+273       description: ''
+274       parameters:
+275       - name: data
+276         in: body
+277         required: true
+278         schema:
+279           $ref: '#/definitions/Stats'
+280       responses:
+281         '200':
+282           description: ''
+283           schema:
+284             $ref: '#/definitions/Stats'
+285       tags:
+286       - laundries
+287     delete:
+288       operationId: laundries_stats_delete
+289       description: ''
+290       parameters: []
+291       responses:
+292         '204':
+293           description: ''
+294       tags:
+295       - laundries
+296     parameters:
+297     - name: laundry_id
+298       in: path
+299       required: true
+300       type: string
+301     - name: id
+302       in: path
+303       required: true
+304       type: string
+305   /laundries/{laundry_id}/time-pricing-conditions/:
+306     get:
+307       operationId: laundries_time-pricing-conditions_list
+308       description: ''
+309       parameters: []
+310       responses:
+311         '200':
+312           description: ''
+313           schema:
+314             type: array
+315             items:
+316               $ref: '#/definitions/TimePricingCondition'
+317       tags:
+318       - laundries
+319     post:
+320       operationId: laundries_time-pricing-conditions_create
+321       description: ''
+322       parameters:
+323       - name: data
+324         in: body
+325         required: true
+326         schema:
+327           $ref: '#/definitions/TimePricingCondition'
+328       responses:
+329         '201':
+330           description: ''
+331           schema:
+332             $ref: '#/definitions/TimePricingCondition'
+333       tags:
+334       - laundries
+335     parameters:
+336     - name: laundry_id
+337       in: path
+338       required: true
+339       type: string
+340   /laundries/{laundry_id}/time-pricing-conditions/{id}/:
+341     get:
+342       operationId: laundries_time-pricing-conditions_read
+343       description: ''
+344       parameters: []
+345       responses:
+346         '200':
+347           description: ''
+348           schema:
+349             $ref: '#/definitions/TimePricingCondition'
+350       tags:
+351       - laundries
+352     put:
+353       operationId: laundries_time-pricing-conditions_update
+354       description: ''
+355       parameters:
+356       - name: data
+357         in: body
+358         required: true
+359         schema:
+360           $ref: '#/definitions/TimePricingCondition'
+361       responses:
+362         '200':
+363           description: ''
+364           schema:
+365             $ref: '#/definitions/TimePricingCondition'
+366       tags:
+367       - laundries
+368     patch:
+369       operationId: laundries_time-pricing-conditions_partial_update
+370       description: ''
+371       parameters:
+372       - name: data
+373         in: body
+374         required: true
+375         schema:
+376           $ref: '#/definitions/TimePricingCondition'
+377       responses:
+378         '200':
+379           description: ''
+380           schema:
+381             $ref: '#/definitions/TimePricingCondition'
+382       tags:
+383       - laundries
+384     delete:
+385       operationId: laundries_time-pricing-conditions_delete
+386       description: ''
+387       parameters: []
+388       responses:
+389         '204':
+390           description: ''
+391       tags:
+392       - laundries
+393     parameters:
+394     - name: laundry_id
+395       in: path
+396       required: true
+397       type: string
+398     - name: id
+399       in: path
+400       required: true
+401       type: string
+402   /login/:
+403     post:
+404       operationId: login_create
+405       description: |-
+406         Takes a set of user credentials and returns an access and refresh JSON web
+407         token pair to prove the authentication of those credentials.
+408       parameters:
+409       - name: data
+410         in: body
+411         required: true
+412         schema:
+413           $ref: '#/definitions/TokenObtainPair'
+414       responses:
+415         '201':
+416           description: ''
+417           schema:
+418             $ref: '#/definitions/TokenObtainPair'
+419       tags:
+420       - login
+421     parameters: []
+422   /refresh-token:
+423     post:
+424       operationId: refresh-token_create
+425       description: |-
+426         Takes a refresh type JSON web token and returns an access type JSON web
+427         token if the refresh token is valid.
+428       parameters:
+429       - name: data
+430         in: body
+431         required: true
+432         schema:
+433           $ref: '#/definitions/TokenRefresh'
+434       responses:
+435         '201':
+436           description: ''
+437           schema:
+438             $ref: '#/definitions/TokenRefresh'
+439       tags:
+440       - refresh-token
+441     parameters: []
+442   /register/customer/:
+443     post:
+444       operationId: register_customer_create
+445       description: ''
+446       parameters:
+447       - name: data
+448         in: body
+449         required: true
+450         schema:
+451           $ref: '#/definitions/CustomerRegistration'
+452       responses:
+453         '201':
+454           description: ''
+455           schema:
+456             $ref: '#/definitions/CustomerRegistration'
+457       tags:
+458       - register
+459     parameters: []
+460   /register/manager/:
+461     post:
+462       operationId: register_manager_create
+463       description: ''
+464       parameters:
+465       - name: data
+466         in: body
+467         required: true
+468         schema:
+469           $ref: '#/definitions/ManagerRegistration'
+470       responses:
+471         '201':
+472           description: ''
+473           schema:
+474             $ref: '#/definitions/ManagerRegistration'
+475       tags:
+476       - register
+477     parameters: []
+478   /register/owner/:
+479     post:
+480       operationId: register_owner_create
+481       description: ''
+482       parameters:
+483       - name: data
+484         in: body
+485         required: true
+486         schema:
+487           $ref: '#/definitions/OwnerRegistration'
+488       responses:
+489         '201':
+490           description: ''
+491           schema:
+492             $ref: '#/definitions/OwnerRegistration'
+493       tags:
+494       - register
+495     parameters: []
+496   /users/:
+497     get:
+498       operationId: users_list
+499       description: ''
+500       parameters: []
+501       responses:
+502         '200':
+503           description: ''
+504           schema:
+505             type: array
+506             items:
+507               $ref: '#/definitions/User'
+508       tags:
+509       - users
+510     post:
+511       operationId: users_create
+512       description: ''
+513       parameters:
+514       - name: data
+515         in: body
+516         required: true
+517         schema:
+518           $ref: '#/definitions/User'
+519       responses:
+520         '201':
+521           description: ''
+522           schema:
+523             $ref: '#/definitions/User'
+524       tags:
+525       - users
+526     parameters: []
+527   /users/{id}/:
+528     get:
+529       operationId: users_read
+530       description: ''
+531       parameters: []
+532       responses:
+533         '200':
+534           description: ''
+535           schema:
+536             $ref: '#/definitions/User'
+537       tags:
+538       - users
+539     put:
+540       operationId: users_update
+541       description: ''
+542       parameters:
+543       - name: data
+544         in: body
+545         required: true
+546         schema:
+547           $ref: '#/definitions/User'
+548       responses:
+549         '200':
+550           description: ''
+551           schema:
+552             $ref: '#/definitions/User'
+553       tags:
+554       - users
+555     patch:
+556       operationId: users_partial_update
+557       description: ''
+558       parameters:
+559       - name: data
+560         in: body
+561         required: true
+562         schema:
+563           $ref: '#/definitions/User'
+564       responses:
+565         '200':
+566           description: ''
+567           schema:
+568             $ref: '#/definitions/User'
+569       tags:
+570       - users
+571     delete:
+572       operationId: users_delete
+573       description: ''
+574       parameters: []
+575       responses:
+576         '204':
+577           description: ''
+578       tags:
+579       - users
+580     parameters:
+581     - name: id
+582       in: path
+583       description: A unique integer value identifying this user.
+584       required: true
+585       type: integer
+586   /washing-cycles/:
+587     get:
+588       operationId: washing-cycles_list
+589       description: ''
+590       parameters: []
+591       responses:
+592         '200':
+593           description: ''
+594           schema:
+595             type: array
+596             items:
+597               $ref: '#/definitions/WashingCycle'
+598       tags:
+599       - washing-cycles
+600     post:
+601       operationId: washing-cycles_create
+602       description: ''
+603       parameters:
+604       - name: data
+605         in: body
+606         required: true
+607         schema:
+608           $ref: '#/definitions/WashingCycle'
+609       responses:
+610         '201':
+611           description: ''
+612           schema:
+613             $ref: '#/definitions/WashingCycle'
+614       tags:
+615       - washing-cycles
+616     parameters: []
+617   /washing-cycles/{id}/:
+618     get:
+619       operationId: washing-cycles_read
+620       description: ''
+621       parameters: []
+622       responses:
+623         '200':
+624           description: ''
+625           schema:
+626             $ref: '#/definitions/WashingCycle'
+627       tags:
+628       - washing-cycles
+629     put:
+630       operationId: washing-cycles_update
+631       description: ''
+632       parameters:
+633       - name: data
+634         in: body
+635         required: true
+636         schema:
+637           $ref: '#/definitions/WashingCycle'
+638       responses:
+639         '200':
+640           description: ''
+641           schema:
+642             $ref: '#/definitions/WashingCycle'
+643       tags:
+644       - washing-cycles
+645     patch:
+646       operationId: washing-cycles_partial_update
+647       description: ''
+648       parameters:
+649       - name: data
+650         in: body
+651         required: true
+652         schema:
+653           $ref: '#/definitions/WashingCycle'
+654       responses:
+655         '200':
+656           description: ''
+657           schema:
+658             $ref: '#/definitions/WashingCycle'
+659       tags:
+660       - washing-cycles
+661     delete:
+662       operationId: washing-cycles_delete
+663       description: ''
+664       parameters: []
+665       responses:
+666         '204':
+667           description: ''
+668       tags:
+669       - washing-cycles
+670     parameters:
+671     - name: id
+672       in: path
+673       description: A unique integer value identifying this washing cycle.
+674       required: true
+675       type: integer
+676   /washing-cycles/{washing_cycle_id}/payments/:
+677     get:
+678       operationId: washing-cycles_payments_list
+679       description: ''
+680       parameters: []
+681       responses:
+682         '200':
+683           description: ''
+684           schema:
+685             type: array
+686             items:
+687               $ref: '#/definitions/Payment'
+688       tags:
+689       - washing-cycles
+690     post:
+691       operationId: washing-cycles_payments_create
+692       description: ''
+693       parameters:
+694       - name: data
+695         in: body
+696         required: true
+697         schema:
+698           $ref: '#/definitions/Payment'
+699       responses:
+700         '201':
+701           description: ''
+702           schema:
+703             $ref: '#/definitions/Payment'
+704       tags:
+705       - washing-cycles
+706     parameters:
+707     - name: washing_cycle_id
+708       in: path
+709       required: true
+710       type: string
+711   /washing-cycles/{washing_cycle_id}/payments/{id}/:
+712     get:
+713       operationId: washing-cycles_payments_read
+714       description: ''
+715       parameters: []
+716       responses:
+717         '200':
+718           description: ''
+719           schema:
+720             $ref: '#/definitions/Payment'
+721       tags:
+722       - washing-cycles
+723     put:
+724       operationId: washing-cycles_payments_update
+725       description: ''
+726       parameters:
+727       - name: data
+728         in: body
+729         required: true
+730         schema:
+731           $ref: '#/definitions/Payment'
+732       responses:
+733         '200':
+734           description: ''
+735           schema:
+736             $ref: '#/definitions/Payment'
+737       tags:
+738       - washing-cycles
+739     patch:
+740       operationId: washing-cycles_payments_partial_update
+741       description: ''
+742       parameters:
+743       - name: data
+744         in: body
+745         required: true
+746         schema:
+747           $ref: '#/definitions/Payment'
+748       responses:
+749         '200':
+750           description: ''
+751           schema:
+752             $ref: '#/definitions/Payment'
+753       tags:
+754       - washing-cycles
+755     delete:
+756       operationId: washing-cycles_payments_delete
+757       description: ''
+758       parameters: []
+759       responses:
+760         '204':
+761           description: ''
+762       tags:
+763       - washing-cycles
+764     parameters:
+765     - name: washing_cycle_id
+766       in: path
+767       required: true
+768       type: string
+769     - name: id
+770       in: path
+771       required: true
+772       type: string
+773   /washing-machines/:
+774     get:
+775       operationId: washing-machines_list
+776       description: ''
+777       parameters: []
+778       responses:
+779         '200':
+780           description: ''
+781           schema:
+782             type: array
+783             items:
+784               $ref: '#/definitions/WashingMachine'
+785       tags:
+786       - washing-machines
+787     post:
+788       operationId: washing-machines_create
+789       description: ''
+790       parameters:
+791       - name: data
+792         in: body
+793         required: true
+794         schema:
+795           $ref: '#/definitions/WashingMachine'
+796       responses:
+797         '201':
+798           description: ''
+799           schema:
+800             $ref: '#/definitions/WashingMachine'
+801       tags:
+802       - washing-machines
+803     parameters: []
+804   /washing-machines/{id}/:
+805     get:
+806       operationId: washing-machines_read
+807       description: ''
+808       parameters: []
+809       responses:
+810         '200':
+811           description: ''
+812           schema:
+813             $ref: '#/definitions/WashingMachine'
+814       tags:
+815       - washing-machines
+816     put:
+817       operationId: washing-machines_update
+818       description: ''
+819       parameters:
+820       - name: data
+821         in: body
+822         required: true
+823         schema:
+824           $ref: '#/definitions/WashingMachine'
+825       responses:
+826         '200':
+827           description: ''
+828           schema:
+829             $ref: '#/definitions/WashingMachine'
+830       tags:
+831       - washing-machines
+832     patch:
+833       operationId: washing-machines_partial_update
+834       description: ''
+835       parameters:
+836       - name: data
+837         in: body
+838         required: true
+839         schema:
+840           $ref: '#/definitions/WashingMachine'
+841       responses:
+842         '200':
+843           description: ''
+844           schema:
+845             $ref: '#/definitions/WashingMachine'
+846       tags:
+847       - washing-machines
+848     delete:
+849       operationId: washing-machines_delete
+850       description: ''
+851       parameters: []
+852       responses:
+853         '204':
+854           description: ''
+855       tags:
+856       - washing-machines
+857     parameters:
+858     - name: id
+859       in: path
+860       description: A unique integer value identifying this washing machine.
+861       required: true
+862       type: integer
+863 definitions:
+864   Laundry:
+865     required:
+866     - address
+867     - name
+868     - price_per_kg
+869     - dynamic_pricing
+870     - manager
+871     - owner
+872     type: object
+873     properties:
+874       id:
+875         title: ID
+876         type: integer
+877         readOnly: true
+878       address:
+879         title: Address
+880         type: string
+881         minLength: 1
+882       name:
+883         title: Name
+884         type: string
+885         maxLength: 255
+886         minLength: 1
+887       price_per_kg:
+888         title: Price per kg
+889         type: string
+890         format: decimal
+891       dynamic_pricing:
+892         title: Dynamic pricing
+893         type: boolean
+894       manager:
+895         title: Manager
+896         type: integer
+897       owner:
+898         title: Owner
+899         type: integer
+900   LoadPricingCondition:
+901     required:
+902     - load_percentage
+903     - price_multiplier
+904     type: object
+905     properties:
+906       id:
+907         title: ID
+908         type: integer
+909         readOnly: true
+910       load_percentage:
+911         title: Load percentage
+912         type: integer
+913         maximum: 4294967295
+914         minimum: 0
+915       price_multiplier:
+916         title: Price multiplier
+917         type: string
+918         format: decimal
+919       laundry:
+920         title: Laundry
+921         type: integer
+922         readOnly: true
+923     description: |2
+924 
+925       Stores the price multiplier for a given load percentage. If dynamic pricing is enabled for a laundry,
+926       the multiplier will be applied to the base price of washing cycle
+927       if load percentage is equal to the given percentage or higher.
+928       The one with the highest suitable load percentage will be used.
+929   Stats:
+930     required:
+931     - timestamp
+932     - load_percentage
+933     type: object
+934     properties:
+935       id:
+936         title: ID
+937         type: integer
+938         readOnly: true
+939       timestamp:
+940         title: Timestamp
+941         type: string
+942         format: date-time
+943       load_percentage:
+944         title: Load percentage
+945         type: integer
+946         maximum: 4294967295
+947         minimum: 0
+948       laundry:
+949         title: Laundry
+950         type: integer
+951         readOnly: true
+952     description: |2
+953 
+954       Stores the load percentage of a laundry at a given time.
+955       This is used to predict load percentage for future via linear regression model.
+956   TimePricingCondition:
+957     required:
+958     - start
+959     - end
+960     - price_multiplier
+961     type: object
+962     properties:
+963       id:
+964         title: ID
+965         type: integer
+966         readOnly: true
+967       start:
+968         title: Start
+969         type: string
+970       end:
+971         title: End
+972         type: string
+973       price_multiplier:
+974         title: Price multiplier
+975         type: string
+976         format: decimal
+977       laundry:
+978         title: Laundry
+979         type: integer
+980         readOnly: true
+981     description: |2
+982 
+983       Stores the price multiplier for a given time range. If dynamic pricing is enabled for a laundry,
+984       the multiplier will be applying to the base price of washing cycle during that time range.
+985       If ranges overlap, the one with the latest start time will be used.
+986   TokenObtainPair:
+987     required:
+988     - username
+989     - password
+990     type: object
+991     properties:
+992       username:
+993         title: Username
+994         type: string
+995         minLength: 1
+996       password:
+997         title: Password
+998         type: string
+999         minLength: 1
+1000  TokenRefresh:
+1001    required:
+1002    - refresh
+1003    type: object
+1004    properties:
+1005      refresh:
+1006        title: Refresh
+1007        type: string
+1008        minLength: 1
+1009      access:
+1010        title: Access
+1011        type: string
+1012        readOnly: true
+1013        minLength: 1
+1014  CustomerRegistration:
+1015    required:
+1016    - username
+1017    - password
+1018    type: object
+1019    properties:
+1020      id:
+1021        title: ID
+1022        type: integer
+1023        readOnly: true
+1024      username:
+1025        title: Username
+1026        description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+1027          only.
+1028        type: string
+1029        pattern: ^[\w.@+-]+$
+1030        maxLength: 150
+1031        minLength: 1
+1032      email:
+1033        title: Email address
+1034        type: string
+1035        format: email
+1036        maxLength: 254
+1037      password:
+1038        title: Password
+1039        type: string
+1040        maxLength: 128
+1041        minLength: 1
+1042      first_name:
+1043        title: First name
+1044        type: string
+1045        maxLength: 150
+1046      last_name:
+1047        title: Last name
+1048        type: string
+1049        maxLength: 150
+1050      groups:
+1051        type: array
+1052        items:
+1053          type: string
+1054        readOnly: true
+1055        uniqueItems: true
+1056  ManagerRegistration:
+1057    required:
+1058    - username
+1059    - password
+1060    type: object
+1061    properties:
+1062      id:
+1063        title: ID
+1064        type: integer
+1065        readOnly: true
+1066      username:
+1067        title: Username
+1068        description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+1069          only.
+1070        type: string
+1071        pattern: ^[\w.@+-]+$
+1072        maxLength: 150
+1073        minLength: 1
+1074      email:
+1075        title: Email address
+1076        type: string
+1077        format: email
+1078        maxLength: 254
+1079      password:
+1080        title: Password
+1081        type: string
+1082        maxLength: 128
+1083        minLength: 1
+1084      first_name:
+1085        title: First name
+1086        type: string
+1087        maxLength: 150
+1088      last_name:
+1089        title: Last name
+1090        type: string
+1091        maxLength: 150
+1092      groups:
+1093        type: array
+1094        items:
+1095          type: string
+1096        readOnly: true
+1097        uniqueItems: true
+1098  OwnerRegistration:
+1099    required:
+1100    - username
+1101    - password
+1102    type: object
+1103    properties:
+1104      id:
+1105        title: ID
+1106        type: integer
+1107        readOnly: true
+1108      username:
+1109        title: Username
+1110        description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+1111          only.
+1112        type: string
+1113        pattern: ^[\w.@+-]+$
+1114        maxLength: 150
+1115        minLength: 1
+1116      email:
+1117        title: Email address
+1118        type: string
+1119        format: email
+1120        maxLength: 254
+1121      password:
+1122        title: Password
+1123        type: string
+1124        maxLength: 128
+1125        minLength: 1
+1126      first_name:
+1127        title: First name
+1128        type: string
+1129        maxLength: 150
+1130      last_name:
+1131        title: Last name
+1132        type: string
+1133        maxLength: 150
+1134      groups:
+1135        type: array
+1136        items:
+1137          type: string
+1138        readOnly: true
+1139        uniqueItems: true
+1140  User:
+1141    required:
+1142    - username
+1143    - password
+1144    type: object
+1145    properties:
+1146      id:
+1147        title: ID
+1148        type: integer
+1149        readOnly: true
+1150      username:
+1151        title: Username
+1152        description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+1153          only.
+1154        type: string
+1155        pattern: ^[\w.@+-]+$
+1156        maxLength: 150
+1157        minLength: 1
+1158      email:
+1159        title: Email address
+1160        type: string
+1161        format: email
+1162        maxLength: 254
+1163      password:
+1164        title: Password
+1165        type: string
+1166        maxLength: 128
+1167        minLength: 1
+1168      first_name:
+1169        title: First name
+1170        type: string
+1171        maxLength: 150
+1172      last_name:
+1173        title: Last name
+1174        type: string
+1175        maxLength: 150
+1176      groups:
+1177        type: array
+1178        items:
+1179          type: string
+1180        readOnly: true
+1181        uniqueItems: true
+1182  WashingCycle:
+1183    required:
+1184    - mode
+1185    - temperature
+1186    - status
+1187    - washing_machine
+1188    - user
+1189    type: object
+1190    properties:
+1191      id:
+1192        title: ID
+1193        type: integer
+1194        readOnly: true
+1195      mode:
+1196        title: Mode
+1197        type: string
+1198        enum:
+1199        - delicate
+1200        - normal
+1201        - heavy
+1202      temperature:
+1203        title: Temperature
+1204        type: integer
+1205        enum:
+1206        - 0
+1207        - 30
+1208        - 60
+1209      status:
+1210        title: Status
+1211        type: string
+1212        enum:
+1213        - booked
+1214        - started
+1215        - in_progress
+1216        - completed
+1217        - cancelled
+1218      booked_for:
+1219        title: Booked for
+1220        type: string
+1221        format: date-time
+1222        x-nullable: true
+1223      start:
+1224        title: Start
+1225        type: string
+1226        format: date-time
+1227        x-nullable: true
+1228      end:
+1229        title: End
+1230        type: string
+1231        format: date-time
+1232        x-nullable: true
+1233      washing_machine:
+1234        title: Washing machine
+1235        type: integer
+1236      user:
+1237        title: User
+1238        type: integer
+1239  Payment:
+1240    required:
+1241    - amount
+1242    - time
+1243    - status
+1244    type: object
+1245    properties:
+1246      id:
+1247        title: ID
+1248        type: integer
+1249        readOnly: true
+1250      amount:
+1251        title: Amount
+1252        type: string
+1253        format: decimal
+1254      time:
+1255        title: Time
+1256        type: string
+1257        format: date-time
+1258      status:
+1259        title: Status
+1260        type: string
+1261        enum:
+1262        - pending
+1263        - completed
+1264        - failed
+1265      washing_cycle:
+1266        title: Washing cycle
+1267        type: integer
+1268        readOnly: true
+1269  WashingMachine:
+1270    required:
+1271    - status
+1272    - max_load
+1273    - laundry
+1274    type: object
+1275    properties:
+1276      id:
+1277        title: ID
+1278        type: integer
+1279        readOnly: true
+1280      status:
+1281        title: Status
+1282        type: string
+1283        enum:
+1284        - available
+1285        - in_use
+1286        - out_of_order
+1287      max_load:
+1288        title: Max load
+1289        type: string
+1290        format: decimal
+1291      laundry:
+1292        title: Laundry
+1293        type: integer
+
+
+ДОДАТОК Б
+Приклади програмного коду
+Приклад оголошення моделі для ORM:
+
+1 class LoadPricingCondition(models.Model):
+2     """
+3     Stores the price multiplier for a given load percentage. If dynamic pricing is enabled for a laundry,
+4     the multiplier will be applied to the base price of washing cycle
+5     if load percentage is equal to the given percentage or higher.
+6     The one with the highest suitable load percentage will be used.
+7     """
+8 
+9     load_percentage = models.PositiveIntegerField()
+10    price_multiplier = models.DecimalField(max_digits=5, decimal_places=2)
+11    laundry = models.ForeignKey(Laundry, on_delete=models.CASCADE, related_name='load_pricing_conditions')
+12
+13    def __str__(self):
+14        return f'{self.laundry.name} - {self.pk} ({self.load_percentage}, {self.price_multiplier})'
+
+
+Приклад оголошення класу-серіалізатора:
+
+1 class LoadPricingConditionSerializer(serializers.ModelSerializer):
+2     class Meta:
+3         model = LoadPricingCondition
+4         fields = '__all__'
+5         extra_kwargs = {
+6             'laundry': {'read_only': True}
+7         }
+8         swagger_schema_fields = {
+9             'description': LoadPricingCondition.__doc__
+10        }
+11
+12    def create(self, validated_data):
+13        laundry = Laundry.objects.get(pk=self.context['view'].kwargs['laundry_id'])
+14        validated_data['laundry'] = laundry
+15        return super().create(validated_data)
+16
+17    def update(self, instance, validated_data):
+18        laundry = Laundry.objects.get(pk=self.context['view'].kwargs['laundry_id'])
+19        validated_data['laundry'] = laundry
+20        return super().update(instance, validated_data)
+
+
+Приклад оголошення класу-нащадка ModelViewSet, що відповідає за операції над ресурсами:
+
+1 class LoadPricingConditionViewSet(viewsets.ModelViewSet):
+2     serializer_class = LoadPricingConditionSerializer
+3 
+4     def get_queryset(self):
+5         if getattr(self, 'swagger_fake_view', False):
+6             return LoadPricingCondition.objects.none()
+7         return LoadPricingCondition.objects.filter(laundry_id=self.kwargs['laundry_id'])
 2
 
 
